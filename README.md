@@ -1,0 +1,2 @@
+# NXR-CTRL
+optmizer pc
