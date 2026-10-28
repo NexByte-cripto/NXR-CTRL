@@ -28,10 +28,16 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Testes de nucleo
         run: python -m pytest tests -q
+      - name: Verificar importacoes antes do teste grafico
+        shell: pwsh
+        run: |
+          if (!(Test-Path "nxr_gui.py")) { throw "nxr_gui.py nao foi restaurado" }
+          python -c "import nxr_gui; print('Importacao da interface OK:', nxr_gui.__file__)"
       - name: Smoke test Qt offscreen
         shell: pwsh
         run: |
-          $env:QT_QPA_PLATFORM="offscreen"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:PYTHONPATH = (Get-Location).Path
           python tests/smoke_qt.py
       - name: Compilar exe
         run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name NXR_CTRL_5_3 --collect-all PySide6 --hidden-import nxr_advanced nxr_gui.py
