@@ -1,0 +1,59 @@
+name: NXR CTRL 5.3 Redline Windows
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'source/nxr_5_3.tar.br.base64'
+      - 'scripts/unpack53.py'
+      - '.github/workflows/redline-53.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Instalar compilador
+        run: python -m pip install pyinstaller brotli pytest
+      - name: Restaurar codigo fonte versionado
+        run: python scripts/unpack53.py
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+      - name: Testes de nucleo
+        run: python -m pytest tests -q
+      - name: Smoke test Qt offscreen
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM="offscreen"
+          python tests/smoke_qt.py
+      - name: Compilar exe
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name NXR_CTRL_5_3 --collect-all PySide6 --hidden-import nxr_advanced nxr_gui.py
+      - name: Hash SHA256
+        shell: pwsh
+        run: |
+          (Get-FileHash dist/NXR_CTRL_5_3.exe -Algorithm SHA256).Hash.ToLower() + '  NXR_CTRL_5_3.exe' | Out-File -Encoding ascii NXR_CTRL_5_3_SHA256.txt
+      - name: Upload artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: NXR-CTRL-5.3-Windows
+          path: |
+            dist/NXR_CTRL_5_3.exe
+            NXR_CTRL_5_3_SHA256.txt
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release view v5.3.0 --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload v5.3.0 dist/NXR_CTRL_5_3.exe NXR_CTRL_5_3_SHA256.txt --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create v5.3.0 dist/NXR_CTRL_5_3.exe NXR_CTRL_5_3_SHA256.txt --repo $env:GITHUB_REPOSITORY --title "NXR CTRL 5.3 Redline Performance" --notes "Versao experimental: ferramentas de rede, perifericos, comparador GPU CSV e acompanhamento de FPS por CSV PresentMon. Sem overclock direto nem overlay proprio."
+          }
