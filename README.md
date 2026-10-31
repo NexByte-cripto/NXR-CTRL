@@ -1,33 +1,40 @@
-# NXR CTRL 6.0 — Black Red Edition
+# NXR CTRL 6.1 — REDLINE COCKPIT
 
-Aplicativo independente de diagnóstico e controle de desempenho para Windows 10/11. Interface Qt/PySide6, telemetria local, rede, FPS por CSV e perfis de energia.
+**Aplicativo experimental e independente para Windows 10/11, com interface PySide6.**
 
-## Versões e download
+A versão **6.1 é uma reconstrução da interface**, não uma simples recoloração da 6.0.
 
-- **[Releases oficiais do projeto](https://github.com/NexByte-cripto/NXR-CTRL/releases)** — arquivos executáveis quando a compilação Windows terminar com sucesso.
-- **[Compilação Black Red 6.0](https://github.com/NexByte-cripto/NXR-CTRL/actions/workflows/black-red-60.yml)** — testes automatizados e compilação do `.exe`.
-- **[Código-fonte 6.0 versionado](https://github.com/NexByte-cripto/NXR-CTRL/blob/main/source/nxr_6_0.tar.br.base64)** — arquivo técnico comprimido; extraído automaticamente no workflow.
-- **[Script de extração](https://github.com/NexByte-cripto/NXR-CTRL/blob/main/scripts/unpack60.py)**.
+## Mudança visual — prova verificável
 
-**Não é necessário enviar ZIPs nem instalar Python para usar um .exe compilado**, mas o download de uma nova versão só estará disponível quando a ação do GitHub terminar e a Release for publicada. O arquivo resultante é portável, não um instalador Inno Setup.
+- Barra lateral de ícones de **74 px** (substitui a antiga coluna larga de menu).
+- **13 abas horizontais**; instrumentos circulares de CPU e RAM; gráficos de utilização.
+- Dashboard horizontal com modos Competitivo, Equilibrado, Cinemático e OC Center.
+- Boost em cartões, telas de energia/processos/sensores/FPS/rede e central de comandos em duas colunas.
+- Núcleo preservado, nova interface em `nxr_cockpit.py`, iniciada por `nxr_gui.py`.
 
-## O que o NXR CTRL 6.0 faz
+**[Baixar imagem real da nova interface — artifact do teste no Windows](https://github.com/NexByte-cripto/NXR-CTRL/actions/runs/41155554975)**: seção **Artifacts**, arquivo `NXR-CTRL-6.1-REAL-DASHBOARD`. Capturada durante o teste Qt (sem monitor físico), não é mockup.
 
-- Dashboard com dados locais de CPU, RAM e discos.
-- Diagnósticos de GPU, drivers, clocks e sensores quando há integração WMI compatível.
-- **44 operações auditáveis em 10 áreas**, indicando mecanismo, risco, requisitos e reversibilidade.
-- Botão de diagnóstico seguro em lote: apenas **seis leituras**, sem alterar Windows ou encerrar processos.
-- Planos de energia e Modo de Jogo com confirmação.
-- Processos, rede, testes de mouse/teclado/monitor e comparação de GPUs via CSV com fontes.
-- FPS por CSV PresentMon; não implementa overlay de FPS próprio.
-- Integrações com aplicações de fabricante para overclock, sem escrita direta de clocks ou tensões.
+## Download oficial
 
-## Originalidade e limites
+- [Releases](https://github.com/NexByte-cripto/NXR-CTRL/releases)
+- [Build Windows 6.1 — testes e compilação](https://github.com/NexByte-cripto/NXR-CTRL/actions/runs/41155554975)
 
-A inspeção estática do instalador do Galdino Control foi utilizada apenas para identificar o **tipo de instalador (Inno Setup 6.7)** e elementos de empacotamento. **Os comandos e o código-fonte internos do Galdino não foram recuperados nem copiados.** A implementação do NXR CTRL é independente.
+O executável `NXR_CTRL_6_1.exe` só é publicado quando o build termina com sucesso. É um **.exe portátil**, não instalador e não assinado digitalmente.
 
-Não promete 100 FPS em qualquer hardware nem ganhos não medidos. Não desativa Windows Defender, UAC ou serviços críticos automaticamente. Software experimental e não assinado digitalmente, com validação em hardware real ainda pendente.
+## Funções
 
-## Testes
+- Leituras locais de CPU, RAM, clocks e uso de disco; temperaturas via LibreHardwareMonitor/OpenHardwareMonitor WMI quando disponíveis.
+- Modo de Jogo, Game DVR, planos de energia, restauração de ajustes registrados.
+- Processos: visualização e encerramento individual confirmado, com proteção de nomes de processos críticos.
+- FPS: CSV PresentMon, antes/depois, 1% low e p99; **sem overlay próprio**.
+- Perfis de jogos, rede por teste de conexão TCP, DNS, testes interativos de mouse/teclado e padrões de cor do monitor.
+- Comparador de GPUs apenas com resultados de benchmarks importados por CSV e com fonte declarada.
+- Central de **44 operações auditáveis**; consulta do mecanismo, limitações e riscos; lote somente de leituras seguras.
 
-O núcleo da versão 6.0 passou por **48 testes automatizados** no ambiente de desenvolvimento. O workflow Windows deve executar os mesmos testes e um teste de abertura de todas as 13 telas Qt antes de compilar o executável.
+## Validação
+
+51 testes do código e smoke test Qt para as 13 telas no Windows. O teste também salva imagem do dashboard real. Isso não substitui testes na sua CPU/GPU e nos drivers locais.
+
+## Transparência
+
+O NXR não recuperou nem copiou código interno de Galdino Control. Overclock, controle de voltagens e ventoinhas não são implementados diretamente; o NXR apenas abre ferramentas de fabricante compatíveis. FPS/temperaturas não são inventados. Alterações potencialmente disruptivas exigem confirmação e devem ser verificadas no seu Windows.
