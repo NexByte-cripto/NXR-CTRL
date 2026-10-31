@@ -1,0 +1,65 @@
+name: NXR CTRL 6.0 Black Red Windows
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'source/nxr_6_0.tar.br.base64'
+      - 'scripts/unpack60.py'
+      - '.github/workflows/black-red-60.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Instalar ferramentas
+        run: python -m pip install pyinstaller brotli pytest
+      - name: Recuperar fontes 6.0
+        run: python scripts/unpack60.py
+      - name: Verificar arquivos
+        shell: pwsh
+        run: |
+          $files = @("nxr_gui.py","nxr_commands.py","nxr_service.py","core.py","fps_engine.py","ultra_tools.py","requirements.txt","tests/smoke_qt.py")
+          foreach ($f in $files) { if (!(Test-Path $f)) { throw "Arquivo ausente: $f" } }
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+      - name: Testes do nucleo
+        run: python -m pytest tests -q
+      - name: Smoke test da interface Qt
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM="offscreen"
+          $env:PYTHONPATH=(Get-Location).Path
+          python tests/smoke_qt.py
+      - name: Gerar EXE
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name NXR_CTRL_6_0 --collect-all PySide6 --hidden-import nxr_advanced --hidden-import nxr_commands nxr_gui.py
+      - name: Checksum
+        shell: pwsh
+        run: |
+          (Get-FileHash dist/NXR_CTRL_6_0.exe -Algorithm SHA256).Hash.ToLower() + '  NXR_CTRL_6_0.exe' | Out-File -Encoding ascii NXR_CTRL_6_0_SHA256.txt
+      - name: Publicar artefatos de CI
+        uses: actions/upload-artifact@v4
+        with:
+          name: NXR-CTRL-6.0-Windows
+          path: |
+            dist/NXR_CTRL_6_0.exe
+            NXR_CTRL_6_0_SHA256.txt
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release view v6.0.0 --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload v6.0.0 dist/NXR_CTRL_6_0.exe NXR_CTRL_6_0_SHA256.txt --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create v6.0.0 dist/NXR_CTRL_6_0.exe NXR_CTRL_6_0_SHA256.txt --repo $env:GITHUB_REPOSITORY --title "NXR CTRL 6.0 Black Red Edition" --notes "Versao independente experimental Windows 64 bits. 44 operacoes auditaveis; nao realiza overclock direto, e FPS em tempo real depende de integracao PresentMon. Software sem assinatura digital."
+          }
